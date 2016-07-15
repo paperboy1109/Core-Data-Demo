@@ -11,6 +11,8 @@ import CoreData
 
 class ViewController: UIViewController {
     
+    // MARK: - Lifecycle
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
@@ -20,10 +22,18 @@ class ViewController: UIViewController {
         let managedObjectContext: NSManagedObjectContext = appDelegate.managedObjectContext
         
         /* Insert a new user into the data store */
-        var newUser = NSEntityDescription.insertNewObjectForEntityForName("Users", inManagedObjectContext: managedObjectContext)
+        //let newUser = NSEntityDescription.insertNewObjectForEntityForName("Users", inManagedObjectContext: managedObjectContext)
         // Set values for the attributes
-        newUser.setValue("Daniel", forKey: "username")
-        newUser.setValue("dadada", forKey: "password")
+        /*
+         newUser.setValue("Daniel", forKey: "username")
+         newUser.setValue("dadada", forKey: "password")
+         */
+        
+        // Quickly add a new user
+        // createNewUser("Sabriel", userPassword: "1234")
+        
+        // Quickly remove a new user
+        
         
         do {
             try managedObjectContext.save()
@@ -35,14 +45,40 @@ class ViewController: UIViewController {
         let fetchRequest = NSFetchRequest(entityName: "Users")
         fetchRequest.returnsObjectsAsFaults = false
         
+        /* Refine search */
+        //fetchRequest.predicate = NSPredicate(format: "username = %@", "Daniel")
+        
         do {
             let results = try managedObjectContext.executeFetchRequest(fetchRequest)
             print(results)
             
             if results.count > 0 {
                 for item in results as! [NSManagedObject] {
+                    
                     print(item.valueForKey("username")!)
                     print(item.valueForKey("password")!)
+                    
+                    /* Convert from NSManagedObject to string */
+                    if let username = item.valueForKey("username") as? String {
+                        print("Here is the username as a String type: ")
+                        print(username)
+                    }
+                    
+                    /* Change/update the username */
+                    item.setValue("Danimal", forKey: "username")
+                    
+                    // Test
+                    if let updatedUsername = item.valueForKey("username") as? String {
+                        print("Here is the username as a String type after updating : ")
+                        print(updatedUsername)
+                    }
+                    
+                    do {
+                        try managedObjectContext.save()
+                    } catch {
+                        fatalError("Unable to save data")
+                    }
+                    
                 }
             }
             
@@ -50,16 +86,57 @@ class ViewController: UIViewController {
             fatalError("Failed to retrieve data from the data store ")
         }
         
+        deleteUser("Danimal")
+        
         
         
         
         
     }
     
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
+    // MARK: - Helpers
+    func deleteUser(userName: String) {
+        
+        let appDelegate: AppDelegate = UIApplication.sharedApplication().delegate as! AppDelegate
+        let managedObjectContext: NSManagedObjectContext = appDelegate.managedObjectContext
+        
+        let fetchRequest = NSFetchRequest(entityName: "Users")
+        fetchRequest.returnsObjectsAsFaults = false
+        fetchRequest.predicate = NSPredicate(format: "username = %@", userName)
+        
+        do {
+            let results = try managedObjectContext.executeFetchRequest(fetchRequest)
+            
+            if results.count > 0 {
+                for item in results as! [NSManagedObject] {
+                    
+                    managedObjectContext.deleteObject(item)
+                    do {
+                        try managedObjectContext.save()
+                    } catch {
+                        fatalError("Unable to save data")
+                    }
+                }
+            }
+            
+        } catch {
+            fatalError("Failed to retrieve data from the data store ")
+        }
+        
     }
+    
+    func createNewUser(userName: String, userPassword: String) {
+        
+        let appDelegate: AppDelegate = UIApplication.sharedApplication().delegate as! AppDelegate
+        let managedObjectContext: NSManagedObjectContext = appDelegate.managedObjectContext
+        
+        let newUser = NSEntityDescription.insertNewObjectForEntityForName("Users", inManagedObjectContext: managedObjectContext)
+         // Set values for the attributes
+         newUser.setValue(userName, forKey: "username")
+         newUser.setValue(userPassword, forKey: "password")
+    }
+    
+    
     
     
 }
